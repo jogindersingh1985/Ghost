@@ -25,7 +25,10 @@ const BETA_FEATURES = [
 const ALPHA_FEATURES = [
     'oauthLogin',
     'membersFiltering',
-    'emailOnlyPosts'
+    'emailOnlyPosts',
+    'customThemeSettings',
+    'membersActivity',
+    'offers'
 ];
 
 module.exports.WRITABLE_KEYS_ALLOWLIST = [...BETA_FEATURES, ...ALPHA_FEATURES];

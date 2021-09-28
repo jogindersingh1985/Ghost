@@ -7,8 +7,8 @@ const path = require('path');
 const {config} = require('../../../utils/configUtils');
 const schema = require('../../../../core/server/data/schema');
 const fixtures = require('../../../../core/server/data/schema/fixtures');
-const frontendSettings = require('../../../../core/frontend/services/settings');
-const validateFrontendSettings = require('../../../../core/frontend/services/settings/validate');
+const routeSettings = require('../../../../core/server/services/route-settings');
+const validateRouteSettings = require('../../../../core/server/services/route-settings/validate');
 const defaultSettings = require('../../../../core/server/data/schema/default-settings');
 
 /**
@@ -32,8 +32,8 @@ const defaultSettings = require('../../../../core/server/data/schema/default-set
  */
 describe('DB version integrity', function () {
     // Only these variables should need updating
-    const currentSchemaHash = '98f6433d608dd44a30f59c243091f6aa';
-    const currentFixturesHash = '8e04dbcb4b8e429e70989572fc9c67b9';
+    const currentSchemaHash = '66e58a7b9081ccf78ac539a527f27332';
+    const currentFixturesHash = '1b842814f2b02ab8831c7e9c139d186e';
     const currentSettingsHash = 'aa3fcbc8ab119b630aeda7366ead5493';
     const currentRoutesHash = '3d180d52c663d173a6be791ef411ed01';
 
@@ -41,7 +41,7 @@ describe('DB version integrity', function () {
     // and the values above will need updating as confirmation
     it('should not change without fixing this test', function () {
         const routesPath = path.join(config.get('paths').defaultSettings, 'default-routes.yaml');
-        const defaultRoutes = validateFrontendSettings(yaml.load(fs.readFileSync(routesPath, 'utf-8')));
+        const defaultRoutes = validateRouteSettings(yaml.load(fs.readFileSync(routesPath, 'utf-8')));
 
         const tablesNoValidation = _.cloneDeep(schema.tables);
         let schemaHash;
@@ -64,6 +64,6 @@ describe('DB version integrity', function () {
         fixturesHash.should.eql(currentFixturesHash);
         settingsHash.should.eql(currentSettingsHash);
         routesHash.should.eql(currentRoutesHash);
-        routesHash.should.eql(frontendSettings.getDefaulHash('routes'));
+        routesHash.should.eql(routeSettings.getDefaultHash());
     });
 });
