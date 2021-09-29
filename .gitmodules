@@ -1,6 +1,8 @@
 [submodule "content/themes/casper"]
 	path = content/themes/casper
 	url = git@github.com:jogindersingh1985/Casper.git
+	branch = main
 [submodule "core/client"]
 	path = core/client
 	url = git@github.com:jogindersingh1985/Admin.git
+	branch = main
