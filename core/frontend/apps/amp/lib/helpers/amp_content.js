@@ -12,7 +12,7 @@ const moment = require('moment');
 const errors = require('@tryghost/errors');
 const logging = require('@tryghost/logging');
 
-const {SafeString} = require('../../../../services/proxy');
+const {SafeString} = require('../../../../services/rendering');
 
 const amperizeCache = {};
 let allowedAMPTags = [];
@@ -201,3 +201,5 @@ function ampContent() {
 }
 
 module.exports = ampContent;
+
+module.exports.async = true;

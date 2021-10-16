@@ -29,6 +29,8 @@ const models = [
     'api-key',
     'mobiledoc-revision',
     'member',
+    'offer',
+    'offer-redemption',
     'product',
     'benefit',
     'stripe-product',

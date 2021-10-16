@@ -2,7 +2,8 @@
 //  Example usages
 // `{{#prev_post}}<a href ="{{url}}>previous post</a>{{/prev_post}}'
 // `{{#next_post}}<a href ="{{url absolute="true">next post</a>{{/next_post}}'
-const {api, hbs, checks} = require('../services/proxy');
+const {api, checks} = require('../services/proxy');
+const {hbs} = require('../services/rendering');
 
 const logging = require('@tryghost/logging');
 const tpl = require('@tryghost/tpl');
@@ -11,7 +12,7 @@ const Promise = require('bluebird');
 const moment = require('moment');
 
 const messages = {
-    mustBeCalledAsBlock: 'The {{{helperName}}} helper must be called as a block. E.g. {{#{helperName}}}...{{/{helperName}}}'
+    mustBeCalledAsBlock: 'The {\\{{helperName}}} helper must be called as a block. E.g. {{#{helperName}}}...{{/{helperName}}}'
 };
 
 const createFrame = hbs.handlebars.createFrame;
@@ -101,3 +102,6 @@ module.exports = function prevNext(options) {
     // With the guards out of the way, attempt to build the apiOptions, and then fetch the data
     return fetch.call(this, options, data);
 };
+
+module.exports.async = true;
+module.exports.alias = 'next_post';

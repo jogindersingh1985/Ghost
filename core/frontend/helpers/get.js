@@ -1,7 +1,8 @@
 // # Get Helper
 // Usage: `{{#get "posts" limit="5"}}`, `{{#get "tags" limit="all"}}`
 // Fetches data from the API
-const {config, hbs, api, prepareContextResource} = require('../services/proxy');
+const {config, api, prepareContextResource} = require('../services/proxy');
+const {hbs} = require('../services/rendering');
 
 const logging = require('@tryghost/logging');
 const errors = require('@tryghost/errors');
@@ -12,7 +13,7 @@ const Promise = require('bluebird');
 const jsonpath = require('jsonpath');
 
 const messages = {
-    mustBeCalledAsBlock: 'The {{{helperName}}} helper must be called as a block. E.g. {{#{helperName}}}...{{/{helperName}}}',
+    mustBeCalledAsBlock: 'The {\\{{helperName}}} helper must be called as a block. E.g. {{#{helperName}}}...{{/{helperName}}}',
     invalidResource: 'Invalid resource given to get helper'
 };
 
@@ -193,3 +194,5 @@ module.exports = function get(resource, options) {
         }
     });
 };
+
+module.exports.async = true;

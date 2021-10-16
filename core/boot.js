@@ -16,13 +16,18 @@ const debug = require('@tryghost/debug')('boot');
  * Helper class to create consistent log messages
  */
 class BootLogger {
-    constructor(logging, startTime) {
+    constructor(logging, metrics, startTime) {
         this.logging = logging;
+        this.metrics = metrics;
         this.startTime = startTime;
     }
     log(message) {
         let {logging, startTime} = this;
         logging.info(`Ghost ${message} in ${(Date.now() - startTime) / 1000}s`);
+    }
+    metric(name) {
+        let {metrics, startTime} = this;
+        metrics.metric(name, Date.now() - startTime);
     }
 }
 
@@ -106,21 +111,35 @@ async function initCore({ghostServer, config}) {
 }
 
 /**
+ * These are services required by Ghost's frontend.
+ */
+async function initServicesForFrontend() {
+    debug('Begin: initServicesForFrontend');
+
+    debug('Begin: Routing Settings');
+    const routeSettings = require('./server/services/route-settings');
+    await routeSettings.init();
+    debug('End: Routing Settings');
+
+    debug('Begin: Themes');
+    // customThemSettingsService.api must be initialized before any theme activation occurs
+    const customThemeSettingsService = require('./server/services/custom-theme-settings');
+    customThemeSettingsService.init();
+    const themeService = require('./server/services/themes');
+    await themeService.init();
+    debug('End: Themes');
+
+    debug('End: initServicesForFrontend');
+}
+
+/**
  * Frontend is intended to be just Ghost's frontend
- * This is technically wrong currently because the theme & frontend settings services contain code used by the API to upload themes & settings
  */
 async function initFrontend() {
     debug('Begin: initFrontend');
 
-    debug('Begin: Frontend Routing Settings');
-    const routeSettings = require('./server/services/route-settings');
-    await routeSettings.init();
-    debug('End: Frontend Routing Settings');
-
-    debug('Begin: Themes');
-    const themeService = require('./server/services/themes');
-    await themeService.init();
-    debug('End: Themes');
+    const helperService = require('./frontend/services/helpers');
+    await helperService.init();
 
     debug('End: initFrontend');
 }
@@ -138,7 +157,7 @@ async function initExpressApps() {
 }
 
 /**
- * Dynamic routing is generated from the routes.yaml file, which is part of the settings service
+ * Dynamic routing is generated from the routes.yaml file
  * When Ghost's DB and core are loaded, we can access this file and call routing.bootstrap.start
  * However this _must_ happen after the express Apps are loaded, hence why this is here and not in initFrontend
  * Routing is currently tightly coupled between the frontend and backend
@@ -178,7 +197,9 @@ async function initServices({config}) {
     debug(`Default API Version: ${defaultApiVersion}`);
 
     debug('Begin: Services');
+    const stripe = require('./server/services/stripe');
     const members = require('./server/services/members');
+    const offers = require('./server/services/offers');
     const permissions = require('./server/services/permissions');
     const xmlrpc = require('./server/services/xmlrpc');
     const slack = require('./server/services/slack');
@@ -193,6 +214,11 @@ async function initServices({config}) {
     // NOTE: limits service has to be initialized first
     // in case it limits initialization of any other service (e.g. webhooks)
     await limits.init();
+
+    // NOTE: Members service depends on these
+    //       so they are initialized before it.
+    await stripe.init();
+    await offers.init();
 
     await Promise.all([
         members.init(),
@@ -219,7 +245,7 @@ async function initServices({config}) {
 /**
  * Kick off recurring jobs and background services
  * These are things that happen on boot, but we don't need to wait for them to finish
- * Later, this might be a service hook:q
+ * Later, this might be a service hook
 
  * @param {object} options
  * @param {object} options.config
@@ -268,6 +294,7 @@ async function bootGhost() {
     let config;
     let ghostServer;
     let logging;
+    let metrics;
 
     // These require their own try-catch block and error format, because we can't log an error if logging isn't working
     try {
@@ -280,7 +307,8 @@ async function bootGhost() {
         // Logging is used absolutely everywhere
         debug('Begin: Load logging');
         logging = require('@tryghost/logging');
-        bootLogger = new BootLogger(logging, startTime);
+        metrics = require('@tryghost/metrics');
+        bootLogger = new BootLogger(logging, metrics, startTime);
         debug('End: Load logging');
 
         // At this point logging is required, so we can handle errors better
@@ -302,12 +330,6 @@ async function bootGhost() {
         require('./shared/sentry');
         debug('End: Load sentry');
 
-        // I18n is basically used to colocate all of our error message strings & required to log server start messages
-        debug('Begin: i18n');
-        const i18n = require('./shared/i18n');
-        i18n.init();
-        debug('End: i18n');
-
         // Step 2 - Start server with minimal app in global maintenance mode
         debug('Begin: load server + minimal app');
         const rootApp = require('./app');
@@ -326,6 +348,7 @@ async function bootGhost() {
         // Step 4 - Load Ghost with all its services
         debug('Begin: Load Ghost Services & Apps');
         await initCore({ghostServer, config});
+        await initServicesForFrontend();
         await initFrontend();
         const ghostApp = await initExpressApps();
         await initDynamicRouting();
@@ -340,6 +363,7 @@ async function bootGhost() {
 
         // Step 6 - We are technically done here - let everyone know!
         bootLogger.log('booted');
+        bootLogger.metric('boot-time');
         notifyServerReady();
 
         // Step 7 - Init our background services, we don't wait for this to finish
