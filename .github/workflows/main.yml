@@ -29,7 +29,9 @@ jobs:
           submodules: true
       - name: Run a zip
         run: |
-          zip -r ./main.zip /home/runner/work/Ghost/Ghost/
+          cd /home/runner/work/Ghost/Ghost/
+          zip -r /tmp/main.zip .
+          cd -
       
       - name: Create Release
         id: create_release
@@ -39,6 +41,7 @@ jobs:
         with:
           tag_name: latest
           release_name: Release latest
+          body: Latest Build 
           #tag_name: ${{ github.ref }}
           #release_name: Release ${{ github.ref }} 
           #body: |
@@ -60,6 +63,6 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
           #asset_path: ./Ghost-${{ github.ref }}.zip
           #asset_name: Ghost-${{ github.ref }}.zip
-          asset_path: ./main.zip
+          asset_path: /tmp/main.zip
           asset_name: main.zip
           asset_content_type: application/zip
