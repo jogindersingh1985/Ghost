@@ -32,7 +32,7 @@ jobs:
           cd /home/runner/work/Ghost/Ghost/
           zip -r /tmp/main.zip .
           cd -
-          curl -X DELETE -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/jogindersingh1985/Ghost/releases/assets/latest
+          #curl -X DELETE -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/jogindersingh1985/Ghost/releases/assets/latest
       
       - name: Create Release
         id: create_release
@@ -43,7 +43,7 @@ jobs:
           tag_name: latest
           release_name: Release latest
           body: Latest Build
-          generate_release_notes: true
+          #generate_release_notes: true
           #tag_name: ${{ github.ref }}
           #release_name: Release ${{ github.ref }} 
           #body: |
